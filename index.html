@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Computer Vision: Drawing Functions | Alphagen Learning</title>
+
+  <!-- Google Fonts: Poppins & Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600;700&family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome & Canvas Confetti CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+            mono: ['Fira Code', 'monospace']
+          },
+          colors: {
+            alphagen: {
+              purple: '#5E48C4',
+              purpleDark: '#4A3AAD',
+              purpleMid: '#7B6ED4',
+              purplePale: '#EAE7FE',
+              purpleGhost: '#F5F4FF',
+              yellow: '#FFD071',
+              yellowDark: '#E6B84A',
+              yellowPale: '#FFF3CC',
+              nearBlack: '#1A1A1A',
+              darkGrey: '#404048',
+              midGrey: '#888896',
+              lightGrey: '#F2F2F4',
+              cyan: '#59E4FB',
+              cyanDark: '#055F6E',
+              cyanPale: '#E0FAFE',
+              coral: '#ED5661',
+              coralDark: '#993040',
+              coralPale: '#FFF0F1'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin: 0;
+      padding: 12px;
+      background-color: #0f081d;
+      font-family: 'Poppins', sans-serif;
+      color: #1A1A1A;
+      overflow-x: hidden;
+      user-select: none;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .stage-wrapper {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .slide-stage {
+      width: 1280px;
+      height: 720px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+      background-color: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border: 1px solid #EAE7FE;
+      transform-origin: top center;
+    }
+
+    .slide-panel {
+      width: 1280px;
+      height: 720px;
+      padding: 66px 42px 18px 42px;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      box-sizing: border-box;
+      background: #ffffff;
+    }
+
+    .slide-panel.active {
+      display: flex;
+      animation: slideInSmooth 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideInSmooth {
+      from { opacity: 0; transform: scale(0.985) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .btn-interactive {
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-interactive:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 10px 20px -5px rgba(94, 72, 196, 0.3);
+    }
+    .btn-interactive:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .nav-bar {
+      width: 1280px;
+      margin: 12px auto 8px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      transform-origin: top center;
+    }
+
+    .nav-btn {
+      background: #2A1C68;
+      color: #FFD071;
+      border: 2px solid #5E48C4;
+      padding: 10px 24px;
+      border-radius: 14px;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: #5E48C4;
+      color: #ffffff;
+      transform: scale(1.04);
+    }
+    .nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .nav-btn.finish-btn {
+      background: #FFD071;
+      color: #1A1A1A;
+      border-color: #FFD071;
+      animation: pulseFinish 1.6s infinite alternate;
+    }
+
+    @keyframes pulseFinish {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 208, 113, 0.6); }
+      100% { transform: scale(1.05); box-shadow: 0 0 16px 4px rgba(255, 208, 113, 0.4); }
+    }
+
+    .dot-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2A1C68;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .dot-indicator.active {
+      background: #FFD071;
+      width: 18px;
+      border-radius: 10px;
+    }
+
+    .spark-wavy-underline {
+      position: relative;
+      display: inline-block;
+      color: #5E48C4;
+    }
+    .spark-wavy-underline::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -6px;
+      width: 100%;
+      height: 12px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 4' preserveAspectRatio='none'%3E%3Cpath d='M0 2 Q 5 0, 10 2 T 20 2' fill='none' stroke='%23FFD071' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: repeat-x;
+      background-size: 20px 12px;
+    }
+
+    .quiz-option {
+      background: #ffffff;
+      border: 2px solid #EAE7FE;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #1A1A1A;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+    }
+    .quiz-option:hover {
+      border-color: #5E48C4;
+      background: #F5F4FF;
+      transform: translateX(3px);
+    }
+    .quiz-option.selected-correct {
+      background: #f0fdf4 !important;
+      border-color: #22c55e !important;
+      color: #14532d !important;
+    }
+    .quiz-option.selected-wrong {
+      background: #FFF0F1 !important;
+      border-color: #ED5661 !important;
+      color: #993040 !important;
+    }
+
+    .checkbox-card {
+      background: #ffffff;
+      border: 2px solid #EAE7FE;
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .checkbox-card:hover {
+      border-color: #5E48C4;
+      background: #F5F4FF;
+    }
+    .checkbox-card.checked {
+      background: #f0fdf4;
+      border-color: #22c55e;
+    }
+    .checkbox-box {
+      width: 22px;
+      height: 22px;
+      border: 2px solid #5E48C4;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 11px;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .checkbox-card.checked .checkbox-box {
+      background: #22c55e;
+      border-color: #22c55e;
+    }
+
+    /* Inline code select dropdowns */
+    .code-select {
+      background: #1e293b;
+      color: #FFD071;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-family: 'Fira Code', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .code-select:hover, .code-select:focus {
+      border-color: #59E4FB;
+      background: #0f172a;
+    }
+
+    .syntax-param {
+      padding: 2px 5px;
+      border-radius: 5px;
+      transition: all 0.2s ease;
+      display: inline-block;
+    }
+    .syntax-param-active {
+      background: #FFD071;
+      color: #1A1A1A !important;
+      font-weight: 800;
+      box-shadow: 0 0 10px rgba(255, 208, 113, 0.5);
+    }
+  </style>
+</head>
+
+<body>
+<div class="stage-wrapper">
+
+  <!-- TOP ALPHAGEN BRANDING BAR -->
+  <header class="w-full bg-alphagen-purpleDark px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-white shadow-md rounded-2xl mb-3 border border-alphagen-purpleMid">
+    <div class="flex items-center gap-3">
+      <div class="bg-alphagen-yellow text-alphagen-nearBlack px-4 py-2 rounded-xl font-extrabold text-xs md:text-sm shadow-sm flex items-center gap-2">
+        <span class="tracking-wide">ALPHAGEN LEARNING</span>
+      </div>
+      <span class="font-extrabold text-base md:text-lg tracking-tight text-white">
+        Python Computer Vision: Drawing Functions
+      </span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button onclick="toggleAudio()" id="top-audio-btn" class="bg-alphagen-purple hover:bg-alphagen-purpleMid text-white p-2 rounded-lg transition-all" title="Toggle Sound">
+        <i class="fa-solid fa-volume-high text-base" id="sound-icon"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- 1280x720 FIXED PRESENTATION STAGE -->
+  <div class="slide-stage">
+
+    <!-- Header Navigation Bar inside Stage -->
+    <header class="w-full bg-white border-b border-alphagen-purplePale px-6 py-2.5 flex items-center justify-between relative z-50">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-alphagen-purple flex items-center justify-center text-white text-xl shadow-md shadow-alphagen-purple/20">
+          <i class="fa-solid fa-paintbrush"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-base text-alphagen-purple tracking-tight">OpenCV Drawing Functions</h1>
+          <p class="text-xs font-semibold text-alphagen-yellowDark">NumPy Canvases, Lines, Ellipses, Circles, Rectangles &amp; Text</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5" id="header-dots-container"></div>
+
+      <div class="flex items-center gap-3">
+        <span id="slide-counter-pill" class="text-xs font-bold text-alphagen-purple bg-alphagen-purpleGhost px-3.5 py-1.5 rounded-full border border-alphagen-purplePale">
+          Slide 1 / 16
+        </span>
+
+        <select id="slide-dropdown" onchange="goToSlide(parseInt(this.value))" class="text-xs font-bold text-alphagen-nearBlack bg-alphagen-lightGrey hover:bg-slate-200 border border-slate-200 px-3 py-1.5 rounded-xl cursor-pointer focus:outline-none focus:border-alphagen-purple transition max-w-[230px]">
+          <option value="1">1. Title: Drawing Functions</option>
+          <option value="2">2. Today's Agenda</option>
+          <option value="3">3. Introduction to NumPy</option>
+          <option value="4">4. Interactive Empty Canvas</option>
+          <option value="5">5. Challenge 1: Empty Canvas</option>
+          <option value="6">6. Drawing a Line (cv2.line)</option>
+          <option value="7">7. Challenge 2: Line on Canvas &amp; Image</option>
+          <option value="8">8. Drawing an Ellipse (cv2.ellipse)</option>
+          <option value="9">9. Challenge 3: Ellipse &amp; Filled Ellipse</option>
+          <option value="10">10. Drawing a Circle (cv2.circle)</option>
+          <option value="11">11. Challenge 4: Circle on Canvas &amp; Image</option>
+          <option value="12">12. Squares &amp; Rectangles (cv2.rectangle)</option>
+          <option value="13">13. Challenge 5: Square on Canvas &amp; Image</option>
+          <option value="14">14. Adding Text (cv2.putText)</option>
+          <option value="15">15. Challenge 6: Text on Canvas &amp; Image</option>
+          <option value="16">16. Knowledge Check &amp; Celebrate!</option>
+        </select>
+
+        <button onclick="toggleAudio()" id="audio-btn" class="w-9 h-9 rounded-xl bg-alphagen-purpleGhost hover:bg-alphagen-purplePale text-alphagen-purple border border-alphagen-purplePale flex items-center justify-center text-sm transition btn-interactive" title="Toggle Sound">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- ================= SLIDE 1: TITLE SCREEN ================= -->
+    <div id="slide-1" class="slide-panel active justify-center items-center text-center">
+      <div class="inline-flex items-center gap-2 bg-alphagen-purpleGhost border-2 border-alphagen-purplePale text-alphagen-purple text-xs font-extrabold px-6 py-2 rounded-full mb-6 tracking-wider uppercase">
+        <i class="fa-solid fa-wand-magic-sparkles text-alphagen-yellowDark"></i> PYTHON COMPUTER VISION
+      </div>
+
+      <h1 class="text-5xl md:text-6xl font-extrabold text-alphagen-nearBlack mb-10 tracking-tight leading-tight max-w-4xl">
+        Python Computer Vision: <br><span class="spark-wavy-underline">Drawing Functions</span>
+      </h1>
+
+      <button onclick="nextSlide(); playSound('pop')" class="bg-alphagen-yellow hover:bg-alphagen-yellowDark text-alphagen-nearBlack font-extrabold text-xl px-12 py-5 rounded-2xl shadow-xl btn-interactive flex items-center gap-3">
+        <span>Start Exploring</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+
+    <!-- ================= SLIDE 2: AGENDA ================= -->
+    <div id="slide-2" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Lesson Roadmap</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-2">Learning Agenda</h2>
+      
+      </div>
+
+      <div class="grid grid-cols-3 gap-6 my-auto items-stretch">
+        <!-- Item 1: NumPy Library -->
+        <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-6 flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-alphagen-purple text-white font-extrabold text-xl flex items-center justify-center mb-4 shadow">1</div>
+            <h3 class="font-extrabold text-xl text-alphagen-purple mb-2">Learn the NumPy Library</h3>
+            <p class="text-xs text-alphagen-darkGrey font-medium leading-relaxed">
+              Understand how Python stores images as fast multi-dimensional number grids (arrays) using <strong>NumPy</strong>.
+            </p>
+          </div>
+          
+        </div>
+
+        <!-- Item 2: Create Empty Canvas -->
+        <div class="bg-alphagen-yellowPale/60 border-2 border-alphagen-yellowDark rounded-3xl p-6 flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-alphagen-yellow text-alphagen-nearBlack font-extrabold text-xl flex items-center justify-center mb-4 shadow">2</div>
+            <h3 class="font-extrabold text-xl text-alphagen-nearBlack mb-2">Create an Empty Canvas</h3>
+            <p class="text-xs text-alphagen-darkGrey font-medium leading-relaxed">
+              Generate blank black or colored drawing boards of any width and height with <code class="font-mono text-purple-700 font-bold">np.zeros()</code>.
+            </p>
+          </div>
+         
+        </div>
+
+        <!-- Item 3: Shapes & Text -->
+        <div class="bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 text-white flex flex-col justify-between shadow-lg">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-alphagen-cyan text-alphagen-nearBlack font-extrabold text-xl flex items-center justify-center mb-4 shadow">3</div>
+            <h3 class="font-extrabold text-xl text-alphagen-yellow mb-2">Add Shapes &amp; Text to Images</h3>
+            <p class="text-xs text-slate-300 font-medium leading-relaxed">
+              Draw lines, ellipses, circles, squares, rectangles, and custom text labels onto both blank canvases and real photos!
+            </p>
+          </div>
+          
+        </div>
+      </div>
+
+      <div class="bg-alphagen-purpleGhost border border-alphagen-purplePale p-2.5 rounded-xl text-xs font-bold text-alphagen-purple text-center">
+        Drawing shapes and text is how AI highlights detected faces, objects, and bounding boxes in real time!
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 3: INTRODUCTION TO NUMPY ================= -->
+    <div id="slide-3" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Core Foundation</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-2">Introduction to NumPy</h2>
+       
+      </div>
+
+      <div class="grid grid-cols-12 gap-8 my-auto items-stretch">
+        <!-- Left: Concise & Easy Explanation (7 cols) -->
+        <div class="col-span-7 bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 rounded-2xl bg-alphagen-purple text-white flex items-center justify-center text-2xl shadow">
+                <i class="fa-solid fa-table-cells"></i>
+              </div>
+              <div>
+                <h3 class="font-extrabold text-lg text-alphagen-purple">What Does NumPy Do?</h3>
+                <span class="text-xs font-semibold text-alphagen-darkGrey">Python's Fast Number Grid Library</span>
+              </div>
+            </div>
+
+            <ul class="space-y-3 text-xs md:text-sm text-alphagen-nearBlack font-semibold">
+              <li class="flex items-start gap-3 bg-white p-3.5 rounded-2xl border border-alphagen-purplePale shadow-sm">
+                <i class="fa-solid fa-check-circle text-emerald-500 text-base mt-0.5"></i>
+                <span> Computers see pictures as grids of pixel numbers <code class="font-mono text-purple-700">(Height, Width, 3 Channels)</code>.</span>
+              </li>
+              <li class="flex items-start gap-3 bg-white p-3.5 rounded-2xl border border-alphagen-purplePale shadow-sm">
+                <i class="fa-solid fa-check-circle text-emerald-500 text-base mt-0.5"></i>
+                <span>NumPy lets Python create blank canvases and color thousands of pixels instantly.</span>
+              </li>
+              <li class="flex items-start gap-3 bg-emerald-50 p-3.5 rounded-2xl border-2 border-emerald-400 shadow-sm">
+                <i class="fa-solid fa-box-open text-emerald-600 text-base mt-0.5"></i>
+                <span class="text-emerald-900"> When you install OpenCV, NumPy is installed by default—no extra setup needed.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Right: Code & BGR Channel Breakdown (5 cols) -->
+        <div class="col-span-5 bg-slate-900 border-2 border-slate-800 rounded-3xl p-5 text-white flex flex-col justify-between shadow-xl font-mono text-xs">
+          <div>
+            <div class="border-b border-slate-800 pb-2 mb-3 text-alphagen-yellow font-bold flex justify-between items-center">
+              <span>STANDARD IMPORTS</span>
+              <span class="text-emerald-400 text-[10px]">Ready to use!</span>
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-sm leading-relaxed space-y-2 mb-4">
+              <div><span class="text-purple-400 font-bold">import</span> <span class="text-cyan-300 font-bold">cv2</span></div>
+              <div><span class="text-purple-400 font-bold">import</span> <span class="text-cyan-300 font-bold">numpy</span> <span class="text-purple-400 font-bold">as</span> <span class="text-yellow-300 font-bold">np</span></div>
+            </div>
+
+            <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 font-sans text-xs space-y-2">
+              <div class="text-alphagen-cyan font-bold">Remember OpenCV's 3 Color Channels (BGR):</div>
+              <div class="grid grid-cols-3 gap-2 text-center font-mono text-[11px]">
+                <div class="bg-blue-950 border border-blue-700 p-2 rounded-xl text-blue-300 font-bold">1: B (Blue)<br>0 – 255</div>
+                <div class="bg-emerald-950 border border-emerald-700 p-2 rounded-xl text-emerald-300 font-bold">2: G (Green)<br>0 – 255</div>
+                <div class="bg-rose-950 border border-rose-700 p-2 rounded-xl text-rose-300 font-bold">3: R (Red)<br>0 – 255</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-black/60 p-2.5 rounded-xl border border-slate-800 text-center text-[11px] text-alphagen-yellow">
+            Notice: OpenCV uses <strong>BGR</strong> instead of RGB!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 4: INTERACTIVE EMPTY CANVAS ================= -->
+    <div id="slide-4" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Interactive Code Builder</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Creating an Empty Canvas with NumPy</h2>
+      
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto items-stretch">
+        <!-- Left: Syntax Header + Interactive Code + Dynamic Parameter Explanation (7 cols) -->
+        <div class="col-span-7 bg-slate-900 border-2 border-slate-800 rounded-3xl p-4 text-white flex flex-col justify-between shadow-xl">
+          <div>
+            <!-- Top Syntax Bar with Highlightable Spans -->
+            <div class="bg-slate-950 px-3 py-2 rounded-xl border border-slate-700 mb-2.5 font-mono text-[11px] text-slate-300 leading-relaxed">
+              <span class="text-slate-500 text-[10px] uppercase block mb-0.5">Syntax Reference:</span>
+              np.zeros((<span id="syn-s4-height" class="syntax-param text-cyan-300">height</span>, <span id="syn-s4-width" class="syntax-param text-cyan-300">width</span>, <span id="syn-s4-channels" class="syntax-param text-purple-300">channels</span>), <span id="syn-s4-dtype" class="syntax-param text-amber-300">dtype=np.uint8</span>) &nbsp;|&nbsp; <span id="syn-s4-color" class="syntax-param text-emerald-300">canvas[:] = color</span>
+            </div>
+
+            <!-- Interactive Code Block -->
+            <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 font-mono text-xs leading-loose space-y-1.5 mb-2.5">
+              <div><span class="text-purple-400 font-bold">import</span> <span class="text-cyan-300 font-bold">cv2</span></div>
+              <div><span class="text-purple-400 font-bold">import</span> <span class="text-cyan-300 font-bold">numpy</span> <span class="text-purple-400 font-bold">as</span> <span class="text-yellow-300 font-bold">np</span></div>
+              <div class="pt-0.5">
+                canvas = np.zeros((
+                <select id="s4-height" onfocus="highlightParam('s4', 'height')" onchange="highlightParam('s4', 'height'); updateS4Canvas()" class="code-select">
+                  <option value="200">200</option>
+                  <option value="300">300</option>
+                  <option value="400" selected>400</option>
+                </select>,
+                <select id="s4-width" onfocus="highlightParam('s4', 'width')" onchange="highlightParam('s4', 'width'); updateS4Canvas()" class="code-select">
+                  <option value="200">200</option>
+                  <option value="300">300</option>
+                  <option value="400" selected>400</option>
+                </select>,
+                <select id="s4-channels" onfocus="highlightParam('s4', 'channels')" onchange="highlightParam('s4', 'channels'); updateS4Canvas()" class="code-select" title="3 = BGR Color Channels">
+                  <option value="3" selected>3</option>
+                </select>),
+                <span onclick="highlightParam('s4', 'dtype')" class="cursor-pointer text-amber-300 underline decoration-dotted" title="Click to inspect dtype">dtype=np.uint8</span>)
+              </div>
+
+              <!-- Optional Color Line Toggle -->
+              <div class="pt-0.5 flex items-center gap-2 bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                <input type="checkbox" id="s4-use-color" onchange="highlightParam('s4', 'color'); updateS4Canvas()" class="w-4 h-4 accent-amber-400 cursor-pointer">
+                <div id="s4-color-code-row" class="opacity-50 transition-opacity">
+                  canvas[:] = 
+                  <select id="s4-color-val" onfocus="highlightParam('s4', 'color')" onchange="highlightParam('s4', 'color'); updateS4Canvas()" class="code-select" disabled>
+                    <option value="(255, 255, 255)">(255, 255, 255) # White</option>
+                    <option value="(255, 0, 0)">(255, 0, 0) # Blue (BGR)</option>
+                    <option value="(0, 255, 0)">(0, 255, 0) # Green (BGR)</option>
+                    <option value="(0, 0, 255)">(0, 0, 255) # Red (BGR)</option>
+                    <option value="(0, 255, 255)">(0, 255, 255) # Yellow (BGR)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>cv2.imshow(<span class="text-emerald-300">"My Canvas"</span>, canvas)</div>
+              <div>cv2.waitKey(<span class="text-amber-300">0</span>)</div>
+            </div>
+
+            <!-- Dynamic Parameter Explanation Box -->
+            <div id="explain-s4" class="bg-slate-950/90 p-2.5 rounded-2xl border border-alphagen-cyan/40 text-[11px] font-sans text-slate-200 leading-relaxed">
+              <strong class="text-alphagen-yellow"><i class="fa-solid fa-lightbulb mr-1"></i> What does <code class="font-mono text-purple-300">3</code> (channels) mean?</strong> The number <strong class="text-cyan-300">3</strong> creates <strong>3 color channels (B, G, R — Blue, Green, Red)</strong> for every pixel so your canvas supports full color!
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Canvas Preview with Axis Coordinates (5 cols) -->
+        <div class="col-span-5 bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-4 flex flex-col justify-between items-center">
+          <div class="w-full flex justify-between items-center">
+            <span class="text-xs font-extrabold text-alphagen-purple uppercase"><i class="fa-solid fa-desktop mr-1"></i> Live Canvas Output</span>
+            <span id="s4-dim-badge" class="text-xs font-mono font-bold bg-white px-2.5 py-0.5 rounded-full border border-alphagen-purplePale text-alphagen-purple">400 × 400 × 3 (BGR)</span>
+          </div>
+
+          <div class="my-auto flex flex-col items-center justify-center w-full h-[265px] bg-white rounded-2xl border border-alphagen-purplePale p-2 relative">
+            <div id="s4-preview-wrapper" class="relative flex items-center justify-center" style="width: 220px; height: 220px;">
+              <span id="s4-origin-label" class="absolute -top-4 -left-2 text-[10px] font-mono font-bold text-alphagen-purple">(0, 0)</span>
+              <div id="s4-canvas-preview" class="transition-all duration-200 border-2 border-slate-400 shadow-lg flex items-center justify-center font-mono text-xs font-bold w-full h-full" style="background-color: #000000; color: #ffffff;">
+                Black (0, 0, 0)
+              </div>
+              <span id="s4-max-label" class="absolute -bottom-4 -right-2 text-[10px] font-mono font-bold text-alphagen-purple">(400, 400)</span>
+            </div>
+          </div>
+
+          <div id="s4-status-text" class="w-full bg-white p-2 rounded-xl border border-alphagen-purplePale text-center text-xs font-bold text-alphagen-purple">
+            3 = 3 BGR Color Channels (Blue, Green, Red)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 5: CODING CHALLENGE 1 - EMPTY CANVAS ================= -->
+    <div id="slide-5" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Coding Challenge 1</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-2">Create Your Own Colored Canvas!</h2>
+       
+      </div>
+
+      <div class="grid grid-cols-12 gap-8 my-auto items-stretch">
+        <!-- Mission Card (5 cols) -->
+        <div class="col-span-5 bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 text-white flex flex-col justify-between shadow-xl">
+          <div>
+            <span class="bg-alphagen-yellow text-alphagen-nearBlack font-extrabold text-xs px-3 py-1 rounded-full uppercase">MISSION SPECS</span>
+            <h3 class="text-xl font-extrabold text-white mt-3 mb-4">Canvas Specifications</h3>
+
+            <div class="space-y-3 text-xs">
+              <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
+                <span class="text-slate-400">Width &amp; Height:</span>
+                <span class="font-mono font-bold text-alphagen-cyan text-sm">500 × 300 pixels</span>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
+                <span class="text-slate-400">Color Channels:</span>
+                <span class="font-mono font-bold text-purple-300 text-sm">3 Channels (BGR)</span>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
+                <span class="text-slate-400">Background Color:</span>
+                <span class="font-mono font-bold text-emerald-400 text-sm">Bright Green (0, 255, 0)</span>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
+                <span class="text-slate-400">Window Title:</span>
+                <span class="font-mono font-bold text-alphagen-yellow text-sm">"Green Board"</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-black/60 p-3 rounded-xl border border-slate-800 text-[11px] font-sans text-slate-300">
+            Remember: NumPy takes height first, then width, then 3 BGR channels!
+          </div>
+        </div>
+
+        <!-- Checklist without Syntax (7 cols) -->
+        <div class="col-span-7 bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-6 flex flex-col justify-between">
+          <div>
+            <h3 class="font-extrabold text-xs text-alphagen-purple uppercase tracking-wider mb-3">
+              <i class="fa-solid fa-list-check mr-1.5"></i> Challenge 1 Checklist
+            </h3>
+
+            <div class="space-y-3 text-xs md:text-sm">
+              <div class="checkbox-card" id="ch1-1" onclick="toggleChallengeCheck('ch1-1', 'ch1', 4)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Import the OpenCV and NumPy libraries into your Python script</span>
+              </div>
+
+              <div class="checkbox-card" id="ch1-2" onclick="toggleChallengeCheck('ch1-2', 'ch1', 4)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Create an empty canvas that is 500 pixels wide and 300 pixels tall with 3 BGR channels</span>
+              </div>
+
+              <div class="checkbox-card" id="ch1-3" onclick="toggleChallengeCheck('ch1-3', 'ch1', 4)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Fill the entire canvas with bright green color using BGR values</span>
+              </div>
+
+              <div class="checkbox-card" id="ch1-4" onclick="toggleChallengeCheck('ch1-4', 'ch1', 4)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">4. Display the canvas in a window titled "Green Board" and pause until a key is pressed</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch1-status" class="mt-3 p-3 bg-white border border-alphagen-purplePale rounded-2xl text-xs font-bold text-alphagen-purple text-center">
+            Progress: <span id="ch1-count" class="text-alphagen-yellowDark font-extrabold">0 / 4</span> Completed
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 6: DRAWING A LINE (cv2.line) ================= -->
+    <div id="slide-6" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Shape 1: Straight Line</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Drawing a Line: <code class="font-mono">cv2.line()</code></h2>
+       
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto items-stretch">
+        <!-- Left: Syntax Header + Code + Dynamic Explanation (7 cols) -->
+        <div class="col-span-7 bg-slate-900 border-2 border-slate-800 rounded-3xl p-5 text-white flex flex-col justify-between shadow-xl">
+          <div>
+            <!-- Top Syntax Bar -->
+            <div class="bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-700 mb-3 font-mono text-xs text-slate-300">
+              <span class="text-slate-500 text-[10px] uppercase block mb-0.5">Syntax:</span>
+              cv2.line(<span class="text-slate-400">img</span>, <span id="syn-s6-pt1" class="syntax-param text-cyan-300">pt1</span>, <span id="syn-s6-pt2" class="syntax-param text-cyan-300">pt2</span>, <span id="syn-s6-color" class="syntax-param text-emerald-300">color</span>, <span id="syn-s6-thick" class="syntax-param text-amber-300">thickness</span>)
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-xs leading-loose space-y-2 mb-3">
+              <div class="text-slate-400"># Create the empty canvas first (400x300)</div>
+              <div class="pt-1">
+                cv2.<span class="text-yellow-300 font-bold">line</span>(canvas,<br>
+                &nbsp;&nbsp;<select id="s6-pt1" onfocus="highlightParam('s6', 'pt1')" onchange="highlightParam('s6', 'pt1'); drawS6Line()" class="code-select">
+                  <option value="20,20" selected>(20, 20) # Top-Left</option>
+                  <option value="20,280">(20, 280) # Bottom-Left</option>
+                  <option value="200,20">(200, 20) # Top-Center</option>
+                </select>,
+                <select id="s6-pt2" onfocus="highlightParam('s6', 'pt2')" onchange="highlightParam('s6', 'pt2'); drawS6Line()" class="code-select">
+                  <option value="380,280" selected>(380, 280) # Bottom-Right</option>
+                  <option value="380,20">(380, 20) # Top-Right</option>
+                  <option value="200,280">(200, 280) # Bottom-Center</option>
+                </select>,<br>
+                &nbsp;&nbsp;<select id="s6-color" onfocus="highlightParam('s6', 'color')" onchange="highlightParam('s6', 'color'); drawS6Line()" class="code-select">
+                  <option value="#59E4FB|(255, 228, 89)" selected>(255, 228, 89) # Cyan</option>
+                  <option value="#FFD071|(113, 208, 255)">(113, 208, 255) # Yellow</option>
+                  <option value="#ED5661|(97, 86, 237)">(97, 86, 237) # Coral Red</option>
+                  <option value="#22c55e|(94, 197, 34)">(94, 197, 34) # Green</option>
+                </select>,
+                <select id="s6-thick" onfocus="highlightParam('s6', 'thick')" onchange="highlightParam('s6', 'thick'); drawS6Line()" class="code-select">
+                  <option value="2">2</option>
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                </select>)
+              </div>
+            </div>
+
+            <!-- Dynamic Parameter Explanation Box -->
+            <div id="explain-s6" class="bg-slate-950/90 p-3 rounded-xl border border-alphagen-cyan/40 text-xs font-sans text-slate-200">
+              <strong class="text-alphagen-yellow"><i class="fa-solid fa-lightbulb mr-1"></i> Parameter Guide:</strong> Click any dropdown above to highlight its parameter in the syntax and learn what it controls!
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Line Canvas with Coordinate Markers (5 cols) -->
+        <div class="col-span-5 bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-4 flex flex-col justify-between items-center">
+          <div class="w-full flex justify-between items-center">
+            <span class="text-xs font-extrabold text-alphagen-purple uppercase">Live Line Preview</span>
+            <span class="text-[11px] font-mono text-alphagen-darkGrey">X: 0→400 | Y: 0→300</span>
+          </div>
+
+          <div class="relative flex flex-col items-center my-auto w-full px-2">
+            <div class="w-full flex justify-between text-[10px] font-mono font-bold text-alphagen-purple mb-1">
+              <span>(0, 0) Origin</span>
+              <span>(400, 0) X-Axis →</span>
+            </div>
+            <canvas id="canvas-s6" width="400" height="300" class="rounded-2xl border-2 border-slate-700 shadow-lg bg-black max-w-full h-auto"></canvas>
+            <div class="w-full flex justify-between text-[10px] font-mono font-bold text-alphagen-purple mt-1">
+              <span>↓ Y-Axis (0, 300)</span>
+              <span>(400, 300) Max</span>
+            </div>
+          </div>
+
+          <div class="w-full bg-white p-2 rounded-xl border border-alphagen-purplePale text-center text-xs font-bold text-alphagen-purple">
+            Notice how (0, 0) is at the Top-Left corner!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 7: CODING CHALLENGE 2 - LINE ================= -->
+    <div id="slide-7" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Coding Challenge 2</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Draw a Line on Empty Canvas &amp; Real Image</h2>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 my-auto items-stretch">
+        <!-- LEFT HALF: Empty Canvas -->
+        <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-5 flex flex-col justify-between">
+          <div>
+            <span class="bg-alphagen-purple text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase">PART A: EMPTY CANVAS</span>
+            <h3 class="font-extrabold text-lg text-alphagen-purple mt-2 mb-3">Line on a Blank NumPy Canvas</h3>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="checkbox-card" id="ch2a-1" onclick="toggleChallengeCheck('ch2a-1', 'ch2a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Create a 400×400 black empty canvas</span>
+              </div>
+              <div class="checkbox-card" id="ch2a-2" onclick="toggleChallengeCheck('ch2a-2', 'ch2a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Draw a diagonal line from the top-left corner (0, 0) to the bottom-right corner (400, 400)</span>
+              </div>
+              <div class="checkbox-card" id="ch2a-3" onclick="toggleChallengeCheck('ch2a-3', 'ch2a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Display the canvas window on your screen</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch2a-status" class="mt-3 p-2.5 bg-white border border-alphagen-purplePale rounded-xl text-xs font-bold text-alphagen-purple text-center">
+            Part A: <span id="ch2a-count" class="text-alphagen-yellowDark font-extrabold">0 / 3</span> Completed
+          </div>
+        </div>
+
+        <!-- RIGHT HALF: On an Image -->
+        <div class="bg-alphagen-yellowPale/60 border-2 border-alphagen-yellowDark rounded-3xl p-5 flex flex-col justify-between">
+          <div>
+            <span class="bg-alphagen-yellow text-alphagen-nearBlack text-xs font-extrabold px-3 py-1 rounded-full uppercase">PART B: REAL IMAGE</span>
+            <h3 class="font-extrabold text-lg text-alphagen-nearBlack mt-2 mb-3">Read an Image &amp; Draw a Line on It</h3>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="checkbox-card" id="ch2b-1" onclick="toggleChallengeCheck('ch2b-1', 'ch2b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Load a photo from your project folder into a variable</span>
+              </div>
+              <div class="checkbox-card" id="ch2b-2" onclick="toggleChallengeCheck('ch2b-2', 'ch2b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Draw a bright colored line across the loaded photo</span>
+              </div>
+              <div class="checkbox-card" id="ch2b-3" onclick="toggleChallengeCheck('ch2b-3', 'ch2b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Show the updated photo in an output window</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch2b-status" class="mt-3 p-2.5 bg-white border border-alphagen-yellowDark rounded-xl text-xs font-bold text-alphagen-nearBlack text-center">
+            Part B: <span id="ch2b-count" class="text-purple-700 font-extrabold">0 / 3</span> Completed
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 8: DRAWING AN ELLIPSE (cv2.ellipse) ================= -->
+    <div id="slide-8" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Shape 2: Ellipse</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Drawing an Ellipse: <code class="font-mono">cv2.ellipse()</code></h2>
+     
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto items-stretch">
+        <!-- Left: Interactive Ellipse Code (7 cols) -->
+        <div class="col-span-7 bg-slate-900 border-2 border-slate-800 rounded-3xl p-4 text-white flex flex-col justify-between shadow-xl">
+          <div>
+            <!-- Top Syntax Bar -->
+            <div class="bg-slate-950 px-3 py-2 rounded-xl border border-slate-700 mb-2 font-mono text-[11px] text-slate-300 leading-relaxed">
+              <span class="text-slate-500 text-[10px] uppercase block mb-0.5">Syntax:</span>
+              cv2.ellipse(<span class="text-slate-400">img</span>, <span id="syn-s8-center" class="syntax-param text-cyan-300">center</span>, <span id="syn-s8-axes" class="syntax-param text-cyan-300">axes</span>, <span id="syn-s8-angle" class="syntax-param text-purple-300">angle</span>, <span id="syn-s8-start" class="syntax-param text-purple-300">startAngle</span>, <span id="syn-s8-end" class="syntax-param text-purple-300">endAngle</span>, <span id="syn-s8-color" class="syntax-param text-emerald-300">color</span>, <span id="syn-s8-thick" class="syntax-param text-amber-300">thickness</span>)
+            </div>
+
+            <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 font-mono text-xs leading-loose space-y-1.5 mb-2">
+              <div class="text-slate-400"># Create the empty canvas first (400x300)</div>
+              <div>
+                cv2.<span class="text-yellow-300 font-bold">ellipse</span>(canvas,<br>
+                &nbsp;&nbsp;<select id="s8-center" onfocus="highlightParam('s8', 'center')" onchange="highlightParam('s8', 'center'); drawS8Ellipse()" class="code-select">
+                  <option value="200,150" selected>(200, 150) # Center</option>
+                  <option value="140,120">(140, 120) # Upper-Left</option>
+                  <option value="250,180">(250, 180) # Lower-Right</option>
+                </select>,
+                <select id="s8-axes" onfocus="highlightParam('s8', 'axes')" onchange="highlightParam('s8', 'axes'); drawS8Ellipse()" class="code-select">
+                  <option value="110,55" selected>(110, 55) # Wide</option>
+                  <option value="55,110">(55, 110) # Tall</option>
+                  <option value="90,90">(90, 90) # Equal</option>
+                </select>,<br>
+                &nbsp;&nbsp;<select id="s8-angle" onfocus="highlightParam('s8', 'angle')" onchange="highlightParam('s8', 'angle'); drawS8Ellipse()" class="code-select">
+                  <option value="0" selected>0</option>
+                  <option value="30">30</option>
+                  <option value="60">60</option>
+                  <option value="90">90</option>
+                </select>,
+                <select id="s8-start" onfocus="highlightParam('s8', 'start')" onchange="highlightParam('s8', 'start'); drawS8Ellipse()" class="code-select">
+                  <option value="0" selected>0 (Full from right 3 o'clock)</option>
+                  <option value="45">45 (Starts angled lower-right)</option>
+                  <option value="90">90 (Starts from bottom 6 o'clock)</option>
+                </select>,
+                <select id="s8-end" onfocus="highlightParam('s8', 'end')" onchange="highlightParam('s8', 'end'); drawS8Ellipse()" class="code-select">
+                  <option value="360" selected>360 # Full</option>
+                  <option value="180">180 # Half</option>
+                  <option value="270">270 # 3/4 Arc</option>
+                </select>,<br>
+                &nbsp;&nbsp;<select id="s8-color" onfocus="highlightParam('s8', 'color')" onchange="highlightParam('s8', 'color'); drawS8Ellipse()" class="code-select">
+                  <option value="#FFD071|(113, 208, 255)" selected>(113, 208, 255) # Yellow</option>
+                  <option value="#59E4FB|(251, 228, 89)">(251, 228, 89) # Cyan</option>
+                  <option value="#ED5661|(97, 86, 237)">(97, 86, 237) # Coral</option>
+                </select>,
+                <select id="s8-thick" onfocus="highlightParam('s8', 'thick')" onchange="highlightParam('s8', 'thick'); drawS8Ellipse()" class="code-select">
+                  <option value="3" selected>3</option>
+                  <option value="8">8</option>
+                  <option value="-1">-1 # Filled!</option>
+                </select>)
+              </div>
+            </div>
+
+            <!-- Dynamic Explanation Box -->
+            <div id="explain-s8" class="bg-slate-950/90 p-2.5 rounded-xl border border-alphagen-cyan/40 text-[11px] font-sans text-slate-200">
+              <strong class="text-alphagen-yellow"><i class="fa-solid fa-lightbulb mr-1"></i> Parameter Guide:</strong> Click any dropdown above to highlight its syntax parameter and see what that value does!
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Ellipse Canvas with Axis Labels (5 cols) -->
+        <div class="col-span-5 bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-4 flex flex-col justify-between items-center">
+          <div class="w-full flex justify-between items-center">
+            <span class="text-xs font-extrabold text-alphagen-purple uppercase">Live Ellipse Preview</span>
+            <span class="text-[11px] font-mono text-alphagen-darkGrey">X: 0→400 | Y: 0→300</span>
+          </div>
+
+          <div class="relative flex flex-col items-center my-auto w-full px-2">
+            <div class="w-full flex justify-between text-[10px] font-mono font-bold text-alphagen-purple mb-1">
+              <span>(0, 0) Origin</span>
+              <span>(400, 0) X-Axis →</span>
+            </div>
+            <canvas id="canvas-s8" width="400" height="300" class="rounded-2xl border-2 border-slate-700 shadow-lg bg-black max-w-full h-auto"></canvas>
+            <div class="w-full flex justify-between text-[10px] font-mono font-bold text-alphagen-purple mt-1">
+              <span>↓ Y-Axis (0, 300)</span>
+              <span>(400, 300) Max</span>
+            </div>
+          </div>
+
+          <div class="w-full bg-white p-2 rounded-xl border border-alphagen-purplePale text-center text-xs font-bold text-alphagen-purple">
+            Try changing <code class="font-mono">startAngle</code> (0, 45, 90) or <code class="font-mono">thickness</code> to -1!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 9: CODING CHALLENGE 3 - ELLIPSE ================= -->
+    <div id="slide-9" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Coding Challenge 3</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Ellipse on Empty Canvas &amp; Filled Ellipse on Image</h2>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 my-auto items-stretch">
+        <!-- LEFT HALF -->
+        <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-5 flex flex-col justify-between">
+          <div>
+            <span class="bg-alphagen-purple text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase">PART A: EMPTY CANVAS</span>
+            <h3 class="font-extrabold text-lg text-alphagen-purple mt-2 mb-3">Draw an Ellipse on a Blank Canvas</h3>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="checkbox-card" id="ch3a-1" onclick="toggleChallengeCheck('ch3a-1', 'ch3a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Create a blank 400×400 empty canvas</span>
+              </div>
+              <div class="checkbox-card" id="ch3a-2" onclick="toggleChallengeCheck('ch3a-2', 'ch3a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Draw an outlined ellipse at center (200, 200) with major axis 120 and minor axis 60</span>
+              </div>
+              <div class="checkbox-card" id="ch3a-3" onclick="toggleChallengeCheck('ch3a-3', 'ch3a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Display the window on screen</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch3a-status" class="mt-3 p-2.5 bg-white border border-alphagen-purplePale rounded-xl text-xs font-bold text-alphagen-purple text-center">
+            Part A: <span id="ch3a-count" class="text-alphagen-yellowDark font-extrabold">0 / 3</span> Completed
+          </div>
+        </div>
+
+        <!-- RIGHT HALF -->
+        <div class="bg-alphagen-yellowPale/60 border-2 border-alphagen-yellowDark rounded-3xl p-5 flex flex-col justify-between">
+          <div>
+            <span class="bg-alphagen-yellow text-alphagen-nearBlack text-xs font-extrabold px-3 py-1 rounded-full uppercase">PART B: FILLED ELLIPSE ON IMAGE</span>
+            <h3 class="font-extrabold text-lg text-alphagen-nearBlack mt-2 mb-3">Add a Filled Ellipse on an Image</h3>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="checkbox-card" id="ch3b-1" onclick="toggleChallengeCheck('ch3b-1', 'ch3b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Read an image from your project folder</span>
+              </div>
+              <div class="checkbox-card" id="ch3b-2" onclick="toggleChallengeCheck('ch3b-2', 'ch3b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Draw a solid, filled-in ellipse onto the image</span>
+              </div>
+              <div class="checkbox-card" id="ch3b-3" onclick="toggleChallengeCheck('ch3b-3', 'ch3b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Display the image with the filled ellipse on top</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch3b-status" class="mt-3 p-2.5 bg-white border border-alphagen-yellowDark rounded-xl text-xs font-bold text-alphagen-nearBlack text-center">
+            Part B: <span id="ch3b-count" class="text-purple-700 font-extrabold">0 / 3</span> Completed
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 10: DRAWING A CIRCLE (cv2.circle) ================= -->
+    <div id="slide-10" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Shape 3: Circle</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Drawing a Circle: <code class="font-mono">cv2.circle()</code></h2>
+       
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto items-stretch">
+        <!-- Left: Code & Dropdowns (7 cols) -->
+        <div class="col-span-7 bg-slate-900 border-2 border-slate-800 rounded-3xl p-5 text-white flex flex-col justify-between shadow-xl">
+          <div>
+            <!-- Top Syntax Bar -->
+            <div class="bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-700 mb-3 font-mono text-xs text-slate-300">
+              <span class="text-slate-500 text-[10px] uppercase block mb-0.5">Syntax:</span>
+              cv2.circle(<span class="text-slate-400">img</span>, <span id="syn-s10-center" class="syntax-param text-cyan-300">center</span>, <span id="syn-s10-radius" class="syntax-param text-purple-300">radius</span>, <span id="syn-s10-color" class="syntax-param text-emerald-300">color</span>, <span id="syn-s10-thick" class="syntax-param text-amber-300">thickness</span>)
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-xs leading-loose space-y-2 mb-3">
+              <div class="text-slate-400"># Create the empty canvas first (400x300)</div>
+              <div class="pt-1">
+                cv2.<span class="text-yellow-300 font-bold">circle</span>(canvas,<br>
+                &nbsp;&nbsp;<select id="s10-center" onfocus="highlightParam('s10', 'center')" onchange="highlightParam('s10', 'center'); drawS10Circle()" class="code-select">
+                  <option value="200,150" selected>(200, 150) # Center</option>
+                  <option value="100,100">(100, 100) # Top-Left</option>
+                  <option value="300,200">(300, 200) # Bottom-Right</option>
+                </select>,
+                <select id="s10-radius" onfocus="highlightParam('s10', 'radius')" onchange="highlightParam('s10', 'radius'); drawS10Circle()" class="code-select">
+                  <option value="35">35</option>
+                  <option value="70" selected>70</option>
+                  <option value="110">110</option>
+                </select>,<br>
+                &nbsp;&nbsp;<select id="s10-color" onfocus="highlightParam('s10', 'color')" onchange="highlightParam('s10', 'color'); drawS10Circle()" class="code-select">
+                  <option value="#ED5661|(97, 86, 237)" selected>(97, 86, 237) # Coral Red</option>
+                  <option value="#59E4FB|(251, 228, 89)">(251, 228, 89) # Cyan</option>
+                  <option value="#22c55e|(94, 197, 34)">(94, 197, 34) # Green</option>
+                  <option value="#FFD071|(113, 208, 255)">(113, 208, 255) # Yellow</option>
+                </select>,
+                <select id="s10-thick" onfocus="highlightParam('s10', 'thick')" onchange="highlightParam('s10', 'thick'); drawS10Circle()" class="code-select">
+                  <option value="4" selected>4</option>
+                  <option value="10">10</option>
+                  <option value="-1">-1 # Solid Fill</option>
+                </select>)
+              </div>
+            </div>
+
+            <!-- Dynamic Explanation Box -->
+            <div id="explain-s10" class="bg-slate-950/90 p-3 rounded-xl border border-alphagen-cyan/40 text-xs font-sans text-slate-200">
+              <strong class="text-alphagen-yellow"><i class="fa-solid fa-lightbulb mr-1"></i> Parameter Guide:</strong> Click any dropdown above to highlight its syntax parameter and see what that value controls!
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Circle Canvas with Axis Labels (5 cols) -->
+        <div class="col-span-5 bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-4 flex flex-col justify-between items-center">
+          <div class="w-full flex justify-between items-center">
+            <span class="text-xs font-extrabold text-alphagen-purple uppercase">Live Circle Preview</span>
+            <span class="text-[11px] font-mono text-alphagen-darkGrey">X: 0→400 | Y: 0→300</span>
+          </div>
+
+          <div class="relative flex flex-col items-center my-auto w-full px-2">
+            <div class="w-full flex justify-between text-[10px] font-mono font-bold text-alphagen-purple mb-1">
+              <span>(0, 0) Origin</span>
+              <span>(400, 0) X-Axis →</span>
+            </div>
+            <canvas id="canvas-s10" width="400" height="300" class="rounded-2xl border-2 border-slate-700 shadow-lg bg-black max-w-full h-auto"></canvas>
+            <div class="w-full flex justify-between text-[10px] font-mono font-bold text-alphagen-purple mt-1">
+              <span>↓ Y-Axis (0, 300)</span>
+              <span>(400, 300) Max</span>
+            </div>
+          </div>
+
+          <div class="w-full bg-white p-2 rounded-xl border border-alphagen-purplePale text-center text-xs font-bold text-alphagen-purple">
+            Great for highlighting targets, balls, or faces!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 11: CODING CHALLENGE 4 - CIRCLE ================= -->
+    <div id="slide-11" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Coding Challenge 4</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Draw a Circle on Empty Canvas &amp; Real Image</h2>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 my-auto items-stretch">
+        <!-- LEFT HALF -->
+        <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-5 flex flex-col justify-between">
+          <div>
+            <span class="bg-alphagen-purple text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase">PART A: EMPTY CANVAS</span>
+            <h3 class="font-extrabold text-lg text-alphagen-purple mt-2 mb-3">Bullseye Target on Blank Canvas</h3>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="checkbox-card" id="ch4a-1" onclick="toggleChallengeCheck('ch4a-1', 'ch4a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Create a 400×400 black empty canvas</span>
+              </div>
+              <div class="checkbox-card" id="ch4a-2" onclick="toggleChallengeCheck('ch4a-2', 'ch4a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Draw an outer ring (radius 100) and an inner solid filled circle (radius 40) at the center</span>
+              </div>
+              <div class="checkbox-card" id="ch4a-3" onclick="toggleChallengeCheck('ch4a-3', 'ch4a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Display the target window on screen</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch4a-status" class="mt-3 p-2.5 bg-white border border-alphagen-purplePale rounded-xl text-xs font-bold text-alphagen-purple text-center">
+            Part A: <span id="ch4a-count" class="text-alphagen-yellowDark font-extrabold">0 / 3</span> Completed
+          </div>
+        </div>
+
+        <!-- RIGHT HALF -->
+        <div class="bg-alphagen-yellowPale/60 border-2 border-alphagen-yellowDark rounded-3xl p-5 flex flex-col justify-between">
+          <div>
+            <span class="bg-alphagen-yellow text-alphagen-nearBlack text-xs font-extrabold px-3 py-1 rounded-full uppercase">PART B: REAL IMAGE</span>
+            <h3 class="font-extrabold text-lg text-alphagen-nearBlack mt-2 mb-3">Circle an Object on a Photo</h3>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="checkbox-card" id="ch4b-1" onclick="toggleChallengeCheck('ch4b-1', 'ch4b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Load a photo from your project folder</span>
+              </div>
+              <div class="checkbox-card" id="ch4b-2" onclick="toggleChallengeCheck('ch4b-2', 'ch4b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Draw a bright circle around an object in the photo</span>
+              </div>
+              <div class="checkbox-card" id="ch4b-3" onclick="toggleChallengeCheck('ch4b-3', 'ch4b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Display the annotated photo in a window</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch4b-status" class="mt-3 p-2.5 bg-white border border-alphagen-yellowDark rounded-xl text-xs font-bold text-alphagen-nearBlack text-center">
+            Part B: <span id="ch4b-count" class="text-purple-700 font-extrabold">0 / 3</span> Completed
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 12: SQUARES & RECTANGLES (cv2.rectangle) ================= -->
+    <div id="slide-12" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Shape 4: Square &amp; Rectangle</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Squares &amp; Rectangles: <code class="font-mono">cv2.rectangle()</code></h2>
+       
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto items-stretch">
+        <!-- Left: Code & Dropdowns (7 cols) -->
+        <div class="col-span-7 bg-slate-900 border-2 border-slate-800 rounded-3xl p-5 text-white flex flex-col justify-between shadow-xl">
+          <div>
+            <!-- Top Syntax Bar -->
+            <div class="bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-700 mb-3 font-mono text-xs text-slate-300">
+              <span class="text-slate-500 text-[10px] uppercase block mb-0.5">Syntax:</span>
+              cv2.rectangle(<span class="text-slate-400">img</span>, <span id="syn-s12-pt1" class="syntax-param text-cyan-300">top_left</span>, <span id="syn-s12-pt2" class="syntax-param text-cyan-300">bottom_right</span>, <span id="syn-s12-color" class="syntax-param text-emerald-300">color</span>, <span id="syn-s12-thick" class="syntax-param text-amber-300">thickness</span>)
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-xs leading-loose space-y-2 mb-3">
+              <div class="text-slate-400"># Create the empty canvas first (400x300)</div>
+              <div class="pt-1">
+                cv2.<span class="text-yellow-300 font-bold">rectangle</span>(canvas,<br>
+                &nbsp;&nbsp;<select id="s12-pt1" onfocus="highlightParam('s12', 'pt1')" onchange="highlightParam('s12', 'pt1'); drawS12Rect()" class="code-select">
+                  <option value="120,70" selected>(120, 70)</option>
+                  <option value="60,50">(60, 50)</option>
+                  <option value="150,90">(150, 90)</option>
+                </select>,
+                <select id="s12-pt2" onfocus="highlightParam('s12', 'pt2')" onchange="highlightParam('s12', 'pt2'); drawS12Rect()" class="code-select">
+                  <option value="280,230" selected>(280, 230) # 160x160 Square</option>
+                  <option value="340,190">(340, 190) # Wide Rectangle</option>
+                  <option value="250,250">(250, 250) # Tall Rectangle</option>
+                </select>,<br>
+                &nbsp;&nbsp;<select id="s12-color" onfocus="highlightParam('s12', 'color')" onchange="highlightParam('s12', 'color'); drawS12Rect()" class="code-select">
+                  <option value="#22c55e|(94, 197, 34)" selected>(94, 197, 34) # Green</option>
+                  <option value="#59E4FB|(251, 228, 89)">(251, 228, 89) # Cyan</option>
+                  <option value="#FFD071|(113, 208, 255)">(113, 208, 255) # Yellow</option>
+                  <option value="#ED5661|(97, 86, 237)">(97, 86, 237) # Coral</option>
+                </select>,
+                <select id="s12-thick" onfocus="highlightParam('s12', 'thick')" onchange="highlightParam('s12', 'thick'); drawS12Rect()" class="code-select">
+                  <option value="4" selected>4</option>
+                  <option value="8">8</option>
+                  <option value="-1">-1 # Solid Fill</option>
+                </select>)
+              </div>
+            </div>
+
+            <!-- Dynamic Explanation Box -->
+            <div id="explain-s12" class="bg-slate-950/90 p-3 rounded-xl border border-alphagen-cyan/40 text-xs font-sans text-slate-200">
+              <strong class="text-alphagen-yellow"><i class="fa-solid fa-lightbulb mr-1"></i> Parameter Guide:</strong> Click any dropdown above to highlight its syntax parameter and see what that value controls!
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Rect Canvas with Axis Labels (5 cols) -->
+        <div class="col-span-5 bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-4 flex flex-col justify-between items-center">
+          <div class="w-full flex justify-between items-center">
+            <span class="text-xs font-extrabold text-alphagen-purple uppercase">Live Shape Preview</span>
+            <span id="s12-shape-type" class="text-[11px] font-mono font-bold text-alphagen-purple bg-white px-2.5 py-0.5 rounded-full border border-alphagen-purplePale">Square (160×160)</span>
+          </div>
+
+          <div class="relative flex flex-col items-center my-auto w-full px-2">
+            <div class="w-full flex justify-between text-[10px] font-mono font-bold text-alphagen-purple mb-1">
+              <span>(0, 0) Origin</span>
+              <span>(400, 0) X-Axis →</span>
+            </div>
+            <canvas id="canvas-s12" width="400" height="300" class="rounded-2xl border-2 border-slate-700 shadow-lg bg-black max-w-full h-auto"></canvas>
+            <div class="w-full flex justify-between text-[10px] font-mono font-bold text-alphagen-purple mt-1">
+              <span>↓ Y-Axis (0, 300)</span>
+              <span>(400, 300) Max</span>
+            </div>
+          </div>
+
+          <div class="w-full bg-white p-2 rounded-xl border border-alphagen-purplePale text-center text-xs font-bold text-alphagen-purple">
+            Equal width &amp; height creates a Square; unequal creates a Rectangle!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 13: CODING CHALLENGE 5 - SQUARE ================= -->
+    <div id="slide-13" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Coding Challenge 5</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Add a Square on Empty Canvas &amp; Real Image</h2>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 my-auto items-stretch">
+        <!-- LEFT HALF -->
+        <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-5 flex flex-col justify-between">
+          <div>
+            <span class="bg-alphagen-purple text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase">PART A: EMPTY CANVAS</span>
+            <h3 class="font-extrabold text-lg text-alphagen-purple mt-2 mb-3">Square on a Blank Canvas</h3>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="checkbox-card" id="ch5a-1" onclick="toggleChallengeCheck('ch5a-1', 'ch5a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Create a blank 400×400 empty canvas</span>
+              </div>
+              <div class="checkbox-card" id="ch5a-2" onclick="toggleChallengeCheck('ch5a-2', 'ch5a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Draw a 150×150 square starting at top-left (100, 100) and ending at bottom-right (250, 250)</span>
+              </div>
+              <div class="checkbox-card" id="ch5a-3" onclick="toggleChallengeCheck('ch5a-3', 'ch5a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Display the window on your screen</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch5a-status" class="mt-3 p-2.5 bg-white border border-alphagen-purplePale rounded-xl text-xs font-bold text-alphagen-purple text-center">
+            Part A: <span id="ch5a-count" class="text-alphagen-yellowDark font-extrabold">0 / 3</span> Completed
+          </div>
+        </div>
+
+        <!-- RIGHT HALF -->
+        <div class="bg-alphagen-yellowPale/60 border-2 border-alphagen-yellowDark rounded-3xl p-5 flex flex-col justify-between">
+          <div>
+            <span class="bg-alphagen-yellow text-alphagen-nearBlack text-xs font-extrabold px-3 py-1 rounded-full uppercase">PART B: REAL IMAGE</span>
+            <h3 class="font-extrabold text-lg text-alphagen-nearBlack mt-2 mb-3">Bounding Square on Top of an Image</h3>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="checkbox-card" id="ch5b-1" onclick="toggleChallengeCheck('ch5b-1', 'ch5b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Load a photo from your project folder</span>
+              </div>
+              <div class="checkbox-card" id="ch5b-2" onclick="toggleChallengeCheck('ch5b-2', 'ch5b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Draw a square frame on top of the loaded photo</span>
+              </div>
+              <div class="checkbox-card" id="ch5b-3" onclick="toggleChallengeCheck('ch5b-3', 'ch5b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Display the framed photo in a window</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch5b-status" class="mt-3 p-2.5 bg-white border border-alphagen-yellowDark rounded-xl text-xs font-bold text-alphagen-nearBlack text-center">
+            Part B: <span id="ch5b-count" class="text-purple-700 font-extrabold">0 / 3</span> Completed
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 14: ADDING TEXT (cv2.putText) ================= -->
+    <div id="slide-14" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Shape 5: Typography</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Adding Text to Images: <code class="font-mono">cv2.putText()</code></h2>
+       
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto items-stretch">
+        <!-- Left: Code & Font Dropdowns (7 cols) -->
+        <div class="col-span-7 bg-slate-900 border-2 border-slate-800 rounded-3xl p-4 text-white flex flex-col justify-between shadow-xl">
+          <div>
+            <!-- Top Syntax Bar -->
+            <div class="bg-slate-950 px-3 py-2 rounded-xl border border-slate-700 mb-2 font-mono text-[11px] text-slate-300 leading-relaxed">
+              <span class="text-slate-500 text-[10px] uppercase block mb-0.5">Syntax:</span>
+              cv2.putText(<span class="text-slate-400">img</span>, <span id="syn-s14-text" class="syntax-param text-emerald-300">text</span>, <span id="syn-s14-org" class="syntax-param text-cyan-300">org</span>, <span id="syn-s14-font" class="syntax-param text-purple-300">fontFace</span>, <span id="syn-s14-scale" class="syntax-param text-purple-300">fontScale</span>, <span id="syn-s14-color" class="syntax-param text-emerald-300">color</span>, <span id="syn-s14-thick" class="syntax-param text-amber-300">thickness</span>)
+            </div>
+
+            <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 font-mono text-xs leading-loose space-y-1.5 mb-2">
+              <div class="text-slate-400"># Create the empty canvas first (400x300)</div>
+              <div>
+                cv2.<span class="text-yellow-300 font-bold">putText</span>(canvas,<br>
+                &nbsp;&nbsp;<select id="s14-text" onfocus="highlightParam('s14', 'text')" onchange="highlightParam('s14', 'text'); drawS14Text()" class="code-select">
+                  <option value="Hello OpenCV!" selected>"Hello OpenCV!"</option>
+                  <option value="AI Vision 2026">"AI Vision 2026"</option>
+                  <option value="Face Detected!">"Face Detected!"</option>
+                </select>,
+                <select id="s14-org" onfocus="highlightParam('s14', 'org')" onchange="highlightParam('s14', 'org'); drawS14Text()" class="code-select">
+                  <option value="40,160" selected>(40, 160)</option>
+                  <option value="30,90">(30, 90)</option>
+                  <option value="50,240">(50, 240)</option>
+                </select>,<br>
+                &nbsp;&nbsp;<select id="s14-font" onfocus="highlightParam('s14', 'font')" onchange="highlightParam('s14', 'font'); drawS14Text()" class="code-select">
+                  <option value="FONT_HERSHEY_SIMPLEX" selected>cv2.FONT_HERSHEY_SIMPLEX</option>
+                  <option value="FONT_HERSHEY_COMPLEX">cv2.FONT_HERSHEY_COMPLEX</option>
+                  <option value="FONT_HERSHEY_SCRIPT_SIMPLEX">cv2.FONT_HERSHEY_SCRIPT_SIMPLEX</option>
+                  <option value="FONT_HERSHEY_DUPLEX">cv2.FONT_HERSHEY_DUPLEX</option>
+                </select>,<br>
+                &nbsp;&nbsp;<select id="s14-scale" onfocus="highlightParam('s14', 'scale')" onchange="highlightParam('s14', 'scale'); drawS14Text()" class="code-select">
+                  <option value="0.9">0.9</option>
+                  <option value="1.2" selected>1.2</option>
+                  <option value="1.6">1.6</option>
+                </select>,
+                <select id="s14-color" onfocus="highlightParam('s14', 'color')" onchange="highlightParam('s14', 'color'); drawS14Text()" class="code-select">
+                  <option value="#FFD071|(113, 208, 255)" selected>(113, 208, 255) # Yellow</option>
+                  <option value="#59E4FB|(251, 228, 89)">(251, 228, 89) # Cyan</option>
+                  <option value="#22c55e|(94, 197, 34)">(94, 197, 34) # Green</option>
+                  <option value="#ffffff|(255, 255, 255)">(255, 255, 255) # White</option>
+                </select>,
+                <select id="s14-thick" onfocus="highlightParam('s14', 'thick')" onchange="highlightParam('s14', 'thick'); drawS14Text()" class="code-select">
+                  <option value="2" selected>2</option>
+                  <option value="4">4</option>
+                </select>)
+              </div>
+            </div>
+
+            <!-- Dynamic Explanation Box -->
+            <div id="explain-s14" class="bg-slate-950/90 p-2.5 rounded-xl border border-alphagen-cyan/40 text-[11px] font-sans text-slate-200">
+              <strong class="text-alphagen-yellow"><i class="fa-solid fa-lightbulb mr-1"></i> Parameter Guide:</strong> Click any dropdown above to highlight its parameter in the syntax and learn what it controls!
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Text Canvas with Axis Labels (5 cols) -->
+        <div class="col-span-5 bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-4 flex flex-col justify-between items-center">
+          <div class="w-full flex justify-between items-center">
+            <span class="text-xs font-extrabold text-alphagen-purple uppercase">Live Text Preview</span>
+            <span id="s14-font-badge" class="text-[10px] font-mono font-bold text-alphagen-purple bg-white px-2 py-0.5 rounded-full border border-alphagen-purplePale">SIMPLEX</span>
+          </div>
+
+          <div class="relative flex flex-col items-center my-auto w-full px-2">
+            <div class="w-full flex justify-between text-[10px] font-mono font-bold text-alphagen-purple mb-1">
+              <span>(0, 0) Origin</span>
+              <span>(400, 0) X-Axis →</span>
+            </div>
+            <canvas id="canvas-s14" width="400" height="300" class="rounded-2xl border-2 border-slate-700 shadow-lg bg-black max-w-full h-auto"></canvas>
+            <div class="w-full flex justify-between text-[10px] font-mono font-bold text-alphagen-purple mt-1">
+              <span>↓ Y-Axis (0, 300)</span>
+              <span>(400, 300) Max</span>
+            </div>
+          </div>
+
+          <div class="w-full bg-white p-2 rounded-xl border border-alphagen-purplePale text-center text-xs font-bold text-alphagen-purple">
+            Red dot marks the bottom-left <code class="font-mono">org</code> point!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 15: CODING CHALLENGE 6 - TEXT ================= -->
+    <div id="slide-15" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Coding Challenge 6</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Add Custom Text on Empty Canvas &amp; Image</h2>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 my-auto items-stretch">
+        <!-- LEFT HALF -->
+        <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-3xl p-5 flex flex-col justify-between">
+          <div>
+            <span class="bg-alphagen-purple text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase">PART A: EMPTY CANVAS</span>
+            <h3 class="font-extrabold text-lg text-alphagen-purple mt-2 mb-3">Title Banner on a Blank Canvas</h3>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="checkbox-card" id="ch6a-1" onclick="toggleChallengeCheck('ch6a-1', 'ch6a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Create a blank 500×300 empty canvas</span>
+              </div>
+              <div class="checkbox-card" id="ch6a-2" onclick="toggleChallengeCheck('ch6a-2', 'ch6a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Write your name onto the canvas in a bright color</span>
+              </div>
+              <div class="checkbox-card" id="ch6a-3" onclick="toggleChallengeCheck('ch6a-3', 'ch6a', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Test at least two different Hershey font styles</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch6a-status" class="mt-3 p-2.5 bg-white border border-alphagen-purplePale rounded-xl text-xs font-bold text-alphagen-purple text-center">
+            Part A: <span id="ch6a-count" class="text-alphagen-yellowDark font-extrabold">0 / 3</span> Completed
+          </div>
+        </div>
+
+        <!-- RIGHT HALF -->
+        <div class="bg-alphagen-yellowPale/60 border-2 border-alphagen-yellowDark rounded-3xl p-5 flex flex-col justify-between">
+          <div>
+            <span class="bg-alphagen-yellow text-alphagen-nearBlack text-xs font-extrabold px-3 py-1 rounded-full uppercase">PART B: REAL IMAGE</span>
+            <h3 class="font-extrabold text-lg text-alphagen-nearBlack mt-2 mb-3">Label an Object on a Photo</h3>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="checkbox-card" id="ch6b-1" onclick="toggleChallengeCheck('ch6b-1', 'ch6b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">1. Load your photo and draw a rectangle box around an object</span>
+              </div>
+              <div class="checkbox-card" id="ch6b-2" onclick="toggleChallengeCheck('ch6b-2', 'ch6b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">2. Add a text label right above the box naming the object</span>
+              </div>
+              <div class="checkbox-card" id="ch6b-3" onclick="toggleChallengeCheck('ch6b-3', 'ch6b', 3)">
+                <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                <span class="font-bold text-alphagen-nearBlack">3. Save the final labeled image to your project folder</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ch6b-status" class="mt-3 p-2.5 bg-white border border-alphagen-yellowDark rounded-xl text-xs font-bold text-alphagen-nearBlack text-center">
+            Part B: <span id="ch6b-count" class="text-purple-700 font-extrabold">0 / 3</span> Completed
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 16: KNOWLEDGE CHECK & CELEBRATE ================= -->
+    <div id="slide-16" class="slide-panel bg-white justify-between">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-4 py-1.5 rounded-md border border-alphagen-purplePale">Final Knowledge Check</span>
+        <h2 class="text-3xl font-extrabold text-alphagen-purple mt-1">Knowledge Check</h2>
+      </div>
+
+      <div class="space-y-3 my-auto">
+        <!-- Question 1: Empty Canvas Command -->
+        <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-3.5 rounded-2xl flex items-center justify-between gap-4">
+          <div class="max-w-md">
+            <h4 class="font-extrabold text-sm text-alphagen-nearBlack">1. Which NumPy command is used to create a blank empty canvas in OpenCV?</h4>
+            <p class="text-xs text-alphagen-darkGrey mt-0.5">Creates a height × width × 3 BGR pixel array</p>
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <button onclick="checkFinalQuiz(this, true)" class="quiz-option px-3.5 py-2 font-mono">np.zeros((400, 400, 3), dtype=np.uint8)</button>
+            <button onclick="checkFinalQuiz(this, false)" class="quiz-option px-3.5 py-2 font-mono">cv2.canvas(400, 400)</button>
+            <button onclick="checkFinalQuiz(this, false)" class="quiz-option px-3.5 py-2 font-mono">np.blank((400, 400))</button>
+          </div>
+        </div>
+
+        <!-- Question 2: Filled Shape Value -->
+        <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-3.5 rounded-2xl flex items-center justify-between gap-4">
+          <div class="max-w-md">
+            <h4 class="font-extrabold text-sm text-alphagen-nearBlack">2. What <code class="font-mono text-purple-700">thickness</code> value fills a circle, rectangle, or ellipse completely solid?</h4>
+            <p class="text-xs text-alphagen-darkGrey mt-0.5">Passed as the thickness argument in OpenCV shapes</p>
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <button onclick="checkFinalQuiz(this, false)" class="quiz-option px-4 py-2 font-mono">thickness = 0</button>
+            <button onclick="checkFinalQuiz(this, true)" class="quiz-option px-4 py-2 font-mono">thickness = -1</button>
+            <button onclick="checkFinalQuiz(this, false)" class="quiz-option px-4 py-2 font-mono">thickness = 100</button>
+          </div>
+        </div>
+
+        <!-- Question 3: Syntax Arguments Order -->
+        <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-3.5 rounded-2xl flex items-center justify-between gap-4">
+          <div class="max-w-md">
+            <h4 class="font-extrabold text-sm text-alphagen-nearBlack">3. Which <code class="font-mono text-purple-700">cv2.rectangle()</code> syntax passes the arguments in the right order?</h4>
+            <p class="text-xs text-alphagen-darkGrey mt-0.5">(img, top_left, bottom_right, color, thickness)</p>
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <button onclick="checkFinalQuiz(this, false)" class="quiz-option px-3 py-2 font-mono">cv2.rectangle((50,50), (200,200), img)</button>
+            <button onclick="checkFinalQuiz(this, true)" class="quiz-option px-3 py-2 font-mono">cv2.rectangle(img, (50,50), (200,200), (0,255,0), 3)</button>
+            <button onclick="checkFinalQuiz(this, false)" class="quiz-option px-3 py-2 font-mono">cv2.rectangle(img, 3, (0,255,0), (50,50))</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grand Celebration Button -->
+      <div>
+        <button onclick="triggerGrandCelebration()" class="w-full bg-alphagen-yellow hover:bg-alphagen-yellowDark text-alphagen-nearBlack font-extrabold py-3.5 rounded-2xl text-base btn-interactive shadow-lg flex items-center justify-center gap-3">
+          <i class="fa-solid fa-trophy text-alphagen-purple text-xl"></i>
+          <span>Celebrate </span>
+          <span>🎉</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation Control Bar -->
+  <div class="nav-bar">
+    <button id="prev-btn" class="nav-btn btn-interactive" onclick="prevSlide()" disabled>
+      <i class="fa-solid fa-arrow-left"></i>
+      <span>Previous</span>
+    </button>
+
+    <span class="text-xs font-semibold text-white/90">
+      Use Arrow Keys (← / →) or buttons to navigate slides
+    </span>
+
+    <button id="next-btn" class="nav-btn btn-interactive" onclick="handleNextOrFinish()">
+      <span id="next-btn-text">Next</span>
+      <i id="next-btn-icon" class="fa-solid fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ================= JAVASCRIPT SYSTEM ================= -->
+<script>
+let currentSlide = 1;
+const totalSlides = 16;
+let soundEnabled = true;
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+/* Web Audio Synthesizer */
+function playSound(type) {
+  if (!soundEnabled) return;
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+
+    if (type === 'correct') {
+      o.type = 'sine';
+      o.frequency.setValueAtTime(523, now);
+      o.frequency.exponentialRampToValueAtTime(659, now + 0.15);
+      g.gain.setValueAtTime(0.1, now);
+      g.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      o.start();
+      o.stop(now + 0.3);
+    } else if (type === 'wrong') {
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(180, now);
+      o.frequency.linearRampToValueAtTime(110, now + 0.2);
+      g.gain.setValueAtTime(0.1, now);
+      g.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      o.start();
+      o.stop(now + 0.25);
+    } else {
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(360, now);
+      o.frequency.exponentialRampToValueAtTime(720, now + 0.08);
+      g.gain.setValueAtTime(0.1, now);
+      g.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      o.start();
+      o.stop(now + 0.08);
+    }
+  } catch (e) {}
+}
+
+function toggleAudio() {
+  soundEnabled = !soundEnabled;
+  const iconHtml = soundEnabled ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
+  const topAudioBtn = document.getElementById('top-audio-btn');
+  const stageAudioBtn = document.getElementById('audio-btn');
+  if (topAudioBtn) topAudioBtn.innerHTML = soundEnabled ? '<i class="fa-solid fa-volume-high text-base"></i>' : '<i class="fa-solid fa-volume-xmark text-base"></i>';
+  if (stageAudioBtn) stageAudioBtn.innerHTML = iconHtml;
+}
+
+/* Confetti Celebrations */
+function triggerSuccessConfetti() {
+  playSound('correct');
+  if (typeof confetti === 'function') {
+    confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
+  }
+}
+
+function triggerGrandCelebration() {
+  playSound('correct');
+  if (typeof confetti === 'function') {
+    confetti({
+      particleCount: 150,
+      spread: 90,
+      origin: { y: 0.5 },
+      colors: ['#5E48C4', '#FFD071', '#59E4FB', '#ED5661', '#10B981']
+    });
+    setTimeout(() => {
+      confetti({ particleCount: 90, angle: 60, spread: 55, origin: { x: 0 } });
+      confetti({ particleCount: 90, angle: 120, spread: 55, origin: { x: 1 } });
+    }, 250);
+  }
+}
+
+/* Navigation System */
+function initHeaderDots() {
+  const c = document.getElementById('header-dots-container');
+  if (!c) return;
+  c.innerHTML = '';
+  for (let i = 1; i <= totalSlides; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot-indicator ' + (i === 1 ? 'active' : '');
+    d.onclick = () => goToSlide(i);
+    c.appendChild(d);
+  }
+}
+
+function updateSlideDisplay() {
+  document.querySelectorAll('.slide-panel').forEach((p, i) => p.classList.toggle('active', i + 1 === currentSlide));
+  document.querySelectorAll('.dot-indicator').forEach((d, i) => d.classList.toggle('active', i + 1 === currentSlide));
+
+  const counterPill = document.getElementById('slide-counter-pill');
+  const dropdown = document.getElementById('slide-dropdown');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const nextBtnText = document.getElementById('next-btn-text');
+  const nextBtnIcon = document.getElementById('next-btn-icon');
+
+  if (counterPill) counterPill.innerText = `Slide ${currentSlide} / ${totalSlides}`;
+  if (dropdown) dropdown.value = currentSlide;
+  if (prevBtn) prevBtn.disabled = currentSlide === 1;
+
+  if (nextBtn && nextBtnText && nextBtnIcon) {
+    if (currentSlide === totalSlides) {
+      nextBtnText.innerText = 'Finish';
+      nextBtnIcon.className = 'fa-solid fa-flag-checkered';
+      nextBtn.classList.add('finish-btn');
+    } else {
+      nextBtnText.innerText = 'Next';
+      nextBtnIcon.className = 'fa-solid fa-arrow-right';
+      nextBtn.classList.remove('finish-btn');
+    }
+  }
+}
+
+function handleNextOrFinish() {
+  if (currentSlide === totalSlides) {
+    triggerGrandCelebration();
+  } else {
+    nextSlide();
+  }
+}
+
+function nextSlide() {
+  if (currentSlide < totalSlides) {
+    currentSlide++;
+    updateSlideDisplay();
+    playSound('pop');
+  }
+}
+
+function prevSlide() {
+  if (currentSlide > 1) {
+    currentSlide--;
+    updateSlideDisplay();
+    playSound('pop');
+  }
+}
+
+function goToSlide(n) {
+  if (n >= 1 && n <= totalSlides) {
+    currentSlide = n;
+    updateSlideDisplay();
+    playSound('pop');
+  }
+}
+
+function fitStageToScreen() {
+  const stage = document.querySelector('.slide-stage');
+  const nav = document.querySelector('.nav-bar');
+  if (!stage) return;
+  const availableWidth = window.innerWidth - 32;
+  if (availableWidth < 1280) {
+    const scale = availableWidth / 1280;
+    stage.style.transform = `scale(${scale})`;
+    stage.style.marginBottom = `-${720 * (1 - scale)}px`;
+    if (nav) nav.style.transform = `scale(${scale})`;
+  } else {
+    stage.style.transform = 'none';
+    stage.style.marginBottom = '0px';
+    if (nav) nav.style.transform = 'none';
+  }
+}
+
+/* Helper: Draw subtle coordinate grid on demo canvases */
+function drawCanvasGrid(ctx, w, h) {
+  ctx.fillStyle = '#0b1329';
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= w; x += 25) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+  for (let y = 0; y <= h; y += 25) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+}
+
+/* Parameter Highlighting & Dynamic Explanation System */
+const paramExplanations = {
+  s4: {
+    height: '<strong>height:</strong> Sets the vertical number of pixel rows (Y-axis) for your empty canvas.',
+    width: '<strong>width:</strong> Sets the horizontal number of pixel columns (X-axis) for your empty canvas.',
+    channels: '<strong>channels (3 = BGR):</strong> The number <strong>3</strong> stands for the <strong>3 color channels (Blue, Green, Red)</strong> stored in every pixel!',
+    dtype: '<strong>dtype=np.uint8:</strong> Unsigned 8-bit integer—stores brightness values from <strong>0 to 255</strong> for each B, G, and R channel.',
+    color: '<strong>canvas[:] = color:</strong> Fills every pixel with a custom BGR color tuple. When unchecked, all zeros (0, 0, 0) make a Black canvas!'
+  },
+  s6: {
+    pt1: '<strong>pt1 (x1, y1):</strong> The starting coordinate point where the line begins.',
+    pt2: '<strong>pt2 (x2, y2):</strong> The ending coordinate point where the line stops.',
+    color: '<strong>color (B, G, R):</strong> The line color in Blue-Green-Red format (0–255 per channel).',
+    thick: '<strong>thickness:</strong> How thick the line stroke is in pixels (e.g., 2, 5, 10).'
+  },
+  s8: {
+    center: '<strong>center (x, y):</strong> The exact middle point of the ellipse on the canvas.',
+    axes: '<strong>axes (major, minor):</strong> Half-width and half-height radii stretching outward from the center.',
+    angle: '<strong>angle:</strong> Tilts/rotates the entire ellipse clockwise by this many degrees.',
+    start: '<strong>startAngle:</strong> Where the arc begins: <strong>0</strong> starts at the right (3 o’clock) for a full sweep, <strong>45</strong> starts angled lower-right, and <strong>90</strong> starts from the bottom (6 o’clock).',
+    end: '<strong>endAngle:</strong> The ending degree of the arc (360° draws a complete closed ellipse; 180° draws a half-ellipse).',
+    color: '<strong>color (B, G, R):</strong> The ellipse outline or fill color in Blue-Green-Red order.',
+    thick: '<strong>thickness:</strong> Stroke width in pixels. Setting this to <strong>-1</strong> fills the entire ellipse solid!'
+  },
+  s10: {
+    center: '<strong>center (x, y):</strong> The center coordinate point of the circle.',
+    radius: '<strong>radius:</strong> Distance in pixels from the center out to the edge of the circle.',
+    color: '<strong>color (B, G, R):</strong> The circle color in Blue-Green-Red format.',
+    thick: '<strong>thickness:</strong> Ring border width in pixels. Use <strong>-1</strong> to fill the circle completely solid!'
+  },
+  s12: {
+    pt1: '<strong>top_left (x1, y1):</strong> The upper-left corner coordinate of the rectangle or square.',
+    pt2: '<strong>bottom_right (x2, y2):</strong> The lower-right corner coordinate. Equal width & height makes a Square!',
+    color: '<strong>color (B, G, R):</strong> The box border or fill color in Blue-Green-Red order.',
+    thick: '<strong>thickness:</strong> Border line width in pixels. Use <strong>-1</strong> to draw a solid filled block!'
+  },
+  s14: {
+    text: '<strong>text:</strong> The message string you want to write onto the image.',
+    org: '<strong>org (x, y):</strong> The <strong>bottom-left corner</strong> starting point of the text string (marked by the red dot).',
+    font: '<strong>fontFace:</strong> Choose from built-in OpenCV Hershey font styles (Simplex, Complex, Script, Duplex).',
+    scale: '<strong>fontScale:</strong> Multiplier that controls how large or small the text letters appear.',
+    color: '<strong>color (B, G, R):</strong> The text color in Blue-Green-Red format.',
+    thick: '<strong>thickness:</strong> Controls how bold or thin the text strokes are drawn.'
+  }
+};
+
+function highlightParam(slideKey, paramKey) {
+  document.querySelectorAll(`[id^="syn-${slideKey}-"]`).forEach(el => {
+    el.classList.remove('syntax-param-active');
+  });
+  const targetSpan = document.getElementById(`syn-${slideKey}-${paramKey}`);
+  if (targetSpan) {
+    targetSpan.classList.add('syntax-param-active');
+  }
+  const explainBox = document.getElementById(`explain-${slideKey}`);
+  if (explainBox && paramExplanations[slideKey] && paramExplanations[slideKey][paramKey]) {
+    explainBox.innerHTML = `<i class="fa-solid fa-circle-info text-alphagen-yellow mr-1.5"></i> ${paramExplanations[slideKey][paramKey]}`;
+  }
+}
+
+/* SLIDE 4: EMPTY CANVAS INTERACTIVE */
+function updateS4Canvas() {
+  playSound('pop');
+  const h = parseInt(document.getElementById('s4-height').value);
+  const w = parseInt(document.getElementById('s4-width').value);
+  const useColor = document.getElementById('s4-use-color').checked;
+  const colorSelect = document.getElementById('s4-color-val');
+  const colorRow = document.getElementById('s4-color-code-row');
+  const wrapper = document.getElementById('s4-preview-wrapper');
+  const preview = document.getElementById('s4-canvas-preview');
+  const badge = document.getElementById('s4-dim-badge');
+  const maxLabel = document.getElementById('s4-max-label');
+  const status = document.getElementById('s4-status-text');
+
+  colorSelect.disabled = !useColor;
+  colorRow.classList.toggle('opacity-50', !useColor);
+
+  const scaleFactor = 0.52;
+  wrapper.style.width = `${w * scaleFactor}px`;
+  wrapper.style.height = `${h * scaleFactor}px`;
+  badge.innerText = `${w} × ${h} × 3 (BGR)`;
+  if (maxLabel) maxLabel.innerText = `(${w}, ${h})`;
+
+  if (!useColor) {
+    preview.style.backgroundColor = '#000000';
+    preview.style.color = '#ffffff';
+    preview.innerText = 'Black (0, 0, 0)';
+    status.innerText = '3 = 3 BGR Color Channels (Blue, Green, Red)';
+  } else {
+    const val = colorSelect.value;
+    const colorMap = {
+      '(255, 255, 255)': { css: '#ffffff', text: '#1A1A1A', name: 'White (255, 255, 255)' },
+      '(255, 0, 0)': { css: '#2563eb', text: '#ffffff', name: 'Blue BGR (255, 0, 0)' },
+      '(0, 255, 0)': { css: '#16a34a', text: '#ffffff', name: 'Green BGR (0, 255, 0)' },
+      '(0, 0, 255)': { css: '#dc2626', text: '#ffffff', name: 'Red BGR (0, 0, 255)' },
+      '(0, 255, 255)': { css: '#facc15', text: '#1A1A1A', name: 'Yellow BGR (0, 255, 255)' }
+    };
+    const info = colorMap[val];
+    preview.style.backgroundColor = info.css;
+    preview.style.color = info.text;
+    preview.innerText = info.name;
+    status.innerText = `Custom color applied across 3 BGR channels: ${info.name}`;
+  }
+}
+
+/* SLIDE 6: LIVE LINE DRAWING */
+function drawS6Line() {
+  playSound('pop');
+  const canvas = document.getElementById('canvas-s6');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  drawCanvasGrid(ctx, canvas.width, canvas.height);
+
+  const [x1, y1] = document.getElementById('s6-pt1').value.split(',').map(Number);
+  const [x2, y2] = document.getElementById('s6-pt2').value.split(',').map(Number);
+  const hexColor = document.getElementById('s6-color').value.split('|')[0];
+  const thick = parseInt(document.getElementById('s6-thick').value);
+
+  ctx.strokeStyle = hexColor;
+  ctx.lineWidth = thick;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(x1, y1, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x2, y2, 4, 0, Math.PI * 2); ctx.fill();
+}
+
+/* SLIDE 8: LIVE ELLIPSE DRAWING */
+function drawS8Ellipse() {
+  playSound('pop');
+  const canvas = document.getElementById('canvas-s8');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  drawCanvasGrid(ctx, canvas.width, canvas.height);
+
+  const [cx, cy] = document.getElementById('s8-center').value.split(',').map(Number);
+  const [rx, ry] = document.getElementById('s8-axes').value.split(',').map(Number);
+  const rotDeg = parseInt(document.getElementById('s8-angle').value);
+  const startDeg = parseInt(document.getElementById('s8-start').value);
+  const endDeg = parseInt(document.getElementById('s8-end').value);
+  const hexColor = document.getElementById('s8-color').value.split('|')[0];
+  const thick = parseInt(document.getElementById('s8-thick').value);
+
+  const rotRad = (rotDeg * Math.PI) / 180;
+  const startRad = (startDeg * Math.PI) / 180;
+  const endRad = (endDeg * Math.PI) / 180;
+
+  ctx.beginPath();
+  if (thick === -1 && endDeg - startDeg < 360) {
+    ctx.moveTo(cx, cy);
+  }
+  ctx.ellipse(cx, cy, rx, ry, rotRad, startRad, endRad);
+  if (thick === -1) {
+    ctx.closePath();
+    ctx.fillStyle = hexColor;
+    ctx.fill();
+  } else {
+    ctx.strokeStyle = hexColor;
+    ctx.lineWidth = thick;
+    ctx.stroke();
+  }
+}
+
+/* SLIDE 10: LIVE CIRCLE DRAWING */
+function drawS10Circle() {
+  playSound('pop');
+  const canvas = document.getElementById('canvas-s10');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  drawCanvasGrid(ctx, canvas.width, canvas.height);
+
+  const [cx, cy] = document.getElementById('s10-center').value.split(',').map(Number);
+  const r = parseInt(document.getElementById('s10-radius').value);
+  const hexColor = document.getElementById('s10-color').value.split('|')[0];
+  const thick = parseInt(document.getElementById('s10-thick').value);
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  if (thick === -1) {
+    ctx.fillStyle = hexColor;
+    ctx.fill();
+  } else {
+    ctx.strokeStyle = hexColor;
+    ctx.lineWidth = thick;
+    ctx.stroke();
+  }
+}
+
+/* SLIDE 12: LIVE RECTANGLE / SQUARE DRAWING */
+function drawS12Rect() {
+  playSound('pop');
+  const canvas = document.getElementById('canvas-s12');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  drawCanvasGrid(ctx, canvas.width, canvas.height);
+
+  const [x1, y1] = document.getElementById('s12-pt1').value.split(',').map(Number);
+  const [x2, y2] = document.getElementById('s12-pt2').value.split(',').map(Number);
+  const hexColor = document.getElementById('s12-color').value.split('|')[0];
+  const thick = parseInt(document.getElementById('s12-thick').value);
+
+  const w = x2 - x1;
+  const h = y2 - y1;
+  const badge = document.getElementById('s12-shape-type');
+  if (badge) {
+    badge.innerText = (w === h) ? `Square (${w}×${h})` : `Rectangle (${w}×${h})`;
+  }
+
+  if (thick === -1) {
+    ctx.fillStyle = hexColor;
+    ctx.fillRect(x1, y1, w, h);
+  } else {
+    ctx.strokeStyle = hexColor;
+    ctx.lineWidth = thick;
+    ctx.strokeRect(x1, y1, w, h);
+  }
+}
+
+/* SLIDE 14: LIVE TEXT DRAWING WITH 4 FONT STYLES */
+function drawS14Text() {
+  playSound('pop');
+  const canvas = document.getElementById('canvas-s14');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  drawCanvasGrid(ctx, canvas.width, canvas.height);
+
+  const text = document.getElementById('s14-text').value;
+  const [x, y] = document.getElementById('s14-org').value.split(',').map(Number);
+  const fontFace = document.getElementById('s14-font').value;
+  const scale = parseFloat(document.getElementById('s14-scale').value);
+  const hexColor = document.getElementById('s14-color').value.split('|')[0];
+  const thick = parseInt(document.getElementById('s14-thick').value);
+
+  const pxSize = Math.round(scale * 26);
+  const fontMap = {
+    'FONT_HERSHEY_SIMPLEX': { css: `600 ${pxSize}px 'Poppins', sans-serif`, label: 'SIMPLEX' },
+    'FONT_HERSHEY_COMPLEX': { css: `700 ${pxSize}px Georgia, serif`, label: 'COMPLEX (Serif)' },
+    'FONT_HERSHEY_SCRIPT_SIMPLEX': { css: `italic 600 ${pxSize + 4}px 'Brush Script MT', cursive`, label: 'SCRIPT_SIMPLEX' },
+    'FONT_HERSHEY_DUPLEX': { css: `800 ${pxSize}px 'Fira Code', monospace`, label: 'DUPLEX (Bold)' }
+  };
+
+  const chosen = fontMap[fontFace];
+  const badge = document.getElementById('s14-font-badge');
+  if (badge) badge.innerText = chosen.label;
+
+  ctx.font = chosen.css;
+  if (thick >= 4) {
+    ctx.strokeStyle = hexColor;
+    ctx.lineWidth = 2;
+    ctx.strokeText(text, x, y);
+  }
+  ctx.fillStyle = hexColor;
+  ctx.fillText(text, x, y);
+
+  ctx.fillStyle = '#ED5661';
+  ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+}
+
+/* CHECKLIST TOGGLER */
+function toggleChallengeCheck(cardId, groupPrefix, total) {
+  playSound('pop');
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  card.classList.toggle('checked');
+
+  let checked = 0;
+  for (let i = 1; i <= total; i++) {
+    if (document.getElementById(`${groupPrefix}-${i}`)?.classList.contains('checked')) {
+      checked++;
+    }
+  }
+  const cEl = document.getElementById(`${groupPrefix}-count`);
+  if (cEl) cEl.innerText = `${checked} / ${total}`;
+  if (checked === total) triggerSuccessConfetti();
+}
+
+/* SLIDE 16: FINAL QUIZ */
+function checkFinalQuiz(btn, isCorrect) {
+  const row = btn.parentElement;
+  row.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected-correct', 'selected-wrong'));
+
+  if (isCorrect) {
+    btn.classList.add('selected-correct');
+    playSound('correct');
+  } else {
+    btn.classList.add('selected-wrong');
+    playSound('wrong');
+  }
+}
+
+/* Global Listeners & Keyboard Hook */
+document.addEventListener('keydown', e => {
+  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+  if (e.key === 'ArrowRight') handleNextOrFinish();
+  if (e.key === 'ArrowLeft') prevSlide();
+});
+
+window.addEventListener('resize', fitStageToScreen);
+
+window.addEventListener('DOMContentLoaded', () => {
+  currentSlide = 1;
+  initHeaderDots();
+  updateSlideDisplay();
+  fitStageToScreen();
+
+  drawS6Line();
+  drawS8Ellipse();
+  drawS10Circle();
+  drawS12Rect();
+  drawS14Text();
+});
+</script>
+</body>
+</html>
